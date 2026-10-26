@@ -52,10 +52,7 @@ const uniq = a => [...new Set(a)];
 // Each comma-separated entry or line is a literal keyword, phrase, or sentence.
 const entries = t => uniq(t.split(/[,\r\n]+/).map(s => s.trim().replace(/\s+/g, " ").toLowerCase()).filter(Boolean));
 const escapeRegex = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-function matchesEntry(text, entry) {
-  const pattern = entry.split(/\s+/).map(escapeRegex).join("\\s+");
-  return new RegExp(`(?:^|[^\\p{L}\\p{N}_])${pattern}(?=$|[^\\p{L}\\p{N}_])`, "iu").test(text);
-}
+
 function compileEntries(value) {
   return entries(value).map(entry => ({entry, regex: new RegExp(`(?:^|[^\\p{L}\\p{N}_])${entry.split(/\s+/).map(escapeRegex).join('\\s+')}(?=$|[^\\p{L}\\p{N}_])`, 'iu')}));
 }
@@ -78,7 +75,8 @@ function classify(text) {
 }
 
 function tweetId(el) {
-  const a = [...el.querySelectorAll('a[href*="/status/"]')].find(x => x.querySelector("time"));
+  const time = el.querySelector('a[href*="/status/"] time');
+  const a = time?.closest('a');
   return a ? a.getAttribute("href").match(/\/status\/(\d+)/)?.[1] : null;
 }
 
@@ -112,7 +110,6 @@ function process(el, force = false) {
   if (!force && previous?.id === id && previous.text === text) return;
   if (previous) { visibility.unobserve(el); el.querySelector('.dl-dot')?.remove(); el.querySelector('.dl-veil')?.remove(); }
   el.dataset.dl = "1";
-  el.style.position = "relative";
   let r = classify(text), state = r.state;
   tracked.set(el, {id, text, state, result: r, visible: false});
   const dot = document.createElement("div");
@@ -169,22 +166,24 @@ function discover(node) {
   }
 }
 const scan = (force = false) => document.querySelectorAll(postSelector).forEach(el => enqueue(el, force));
+let pendingNodes = new Set();
+let mutationRaf = 0;
+function drainMutations() {
+  mutationRaf = 0;
+  const nodes = pendingNodes;
+  pendingNodes = new Set();
+  for (const node of nodes) {
+    if (node.isConnected) discover(node);
+  }
+}
 new MutationObserver(records => {
   for (const record of records) {
-    const target = record.target.nodeType === Node.ELEMENT_NODE ? record.target : record.target.parentElement;
-    if (!target || target.closest('.dl-dot, .dl-veil')) continue;
-    // Ignore our own added/removed controls and unrelated engagement counters.
-    if (record.type === 'childList') {
-      for (const node of record.addedNodes) discover(node);
-      const text = target.closest('[data-testid="tweetText"]');
-      if (text) { const post = text.closest(postSelector); if (post) enqueue(post); }
-    } else if (record.type === 'characterData') {
-      if (target.closest('[data-testid="tweetText"]')) { const post = target.closest(postSelector); if (post) enqueue(post); }
-    } else if (target.matches('a[href*="/status/"]')) {
-      const post = target.closest(postSelector); if (post) enqueue(post);
+    for (const node of record.addedNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) pendingNodes.add(node);
     }
   }
-}).observe(document.body, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href']});
+  if (pendingNodes.size && !mutationRaf) mutationRaf = requestAnimationFrame(drainMutations);
+}).observe(document.body, {childList: true, subtree: true});
 
 async function load(force = true) {
   const s = await chrome.storage.sync.get(["goals", "avoid", "blurMode"]);
