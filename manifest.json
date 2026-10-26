@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "DotLens for X",
+  "version": "0.2.1",
+  "description": "Green, red or gray dot on every post based on your own goals.",
+  "permissions": ["storage"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["https://x.com/*", "https://twitter.com/*"],
+    "js": ["content.js"],
+    "css": ["content.css"],
+    "run_at": "document_idle"
+  }],
+  "action": { "default_popup": "popup.html" },
+  "options_page": "options.html"
+}
