@@ -1,13 +1,13 @@
 const STOP = new Set("this that with have from they will your about what when there their been were just like more than into some very also only over them then here make".split(" "));
 let cfg = { goals: "", avoid: "", learned: {}, blurMode: "red" };
-const revealed = new Set();   // tweet ids the user chose to view
+const revealed = new Set();   // platform-specific post IDs the user chose to view
 const tracked = new WeakMap();
 const reported = new Map();
 let goalMatchers = [], avoidMatchers = [];
 function report(el, reveal = false) {
   const post = tracked.get(el);
   if (!post?.visible) return;
-  const hidden = Boolean(el.querySelector('.dl-veil'));
+  const hidden = Boolean(controlsRoot(el).querySelector('.dl-veil'));
   const reasons = post.state === 'red' ? post.result.neg : ['No goal match (strict mode)'];
   post.everHidden ||= hidden;
   post.revealed ||= reveal;
@@ -54,7 +54,10 @@ const entries = t => uniq(t.split(/[,\r\n]+/).map(s => s.trim().replace(/\s+/g, 
 const escapeRegex = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function compileEntries(value) {
-  return entries(value).map(entry => ({entry, regex: new RegExp(`(?:^|[^\\p{L}\\p{N}_])${entry.split(/\s+/).map(escapeRegex).join('\\s+')}(?=$|[^\\p{L}\\p{N}_])`, 'iu')}));
+  // Require complete words, including Unicode combining marks/connectors.
+  // Spaces, punctuation and line breaks delimit words; "paid"/"OpenAI" do not.
+  const wordCharacter = '[\\p{L}\\p{M}\\p{N}\\p{Pc}\\u200C\\u200D]';
+  return entries(value).map(entry => ({entry, regex: new RegExp(`(?<!${wordCharacter})${entry.split(/\s+/).map(escapeRegex).join('\\s+')}(?!${wordCharacter})`, 'iu')}));
 }
 
 function classify(text) {
@@ -74,10 +77,79 @@ function classify(text) {
   return { state, pos: uniq(pos), neg: uniq(neg) };
 }
 
-function tweetId(el) {
-  const time = el.querySelector('a[href*="/status/"] time');
-  const a = time?.closest('a');
-  return a ? a.getAttribute("href").match(/\/status\/(\d+)/)?.[1] : null;
+const isReddit = /^(?:www\.|old\.|new\.)?reddit\.com$/.test(location.hostname);
+const postSelector = isReddit
+  ? 'shreddit-post, article[data-testid="post-container"], .thing.link[data-fullname]'
+  : 'article[data-testid="tweet"]';
+const redditExcludedSelector = 'shreddit-comment, shreddit-comment-tree, shreddit-async-loader[comment-id], .thing.comment, .commentarea, [slot="comment"], [slot="comments"], [data-testid="comment"], [data-testid="comment-tree"], [data-testid="moderator-announcement"], [data-testid="moderator-notice"], [data-testid="mod-notice"], [slot="mod-announcement"], [slot="post-mod-note"], shreddit-post-removed-banner, [slot="credit-bar"], [data-testid="post-meta"], [data-testid="post-flair"], [slot="post-flair"], [data-post-click-location="author"], [data-post-click-location="subreddit"], .dl-dot, .dl-veil, aside, nav, button, script, style, template, noscript';
+function ownedPostSection(node, post) {
+  return node.closest(postSelector) === post && !node.closest(redditExcludedSelector);
+}
+function redditSectionText(section, post) {
+  // Never read a wrapper's textContent: comments and moderation UI may be
+  // nested inside it. Prune those subtrees before visiting any text nodes.
+  const visit = node => {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    if (node.matches(redditExcludedSelector) || (node !== post && node.matches(postSelector))) return '\n';
+    const text = [...node.childNodes].map(visit).join('');
+    return /^(P|DIV|SECTION|ARTICLE|H[1-6]|LI|UL|OL|BLOCKQUOTE|PRE|BR)$/.test(node.tagName) ? `\n${text}\n` : text;
+  };
+  return visit(section).trim();
+}
+function redditPostText(post) {
+  const modern = post.tagName === 'SHREDDIT-POST';
+  const classic = post.matches('.thing.link');
+  const titleSelector = modern ? '[slot="title"], [id^="post-title"]' : classic ? 'a.title' : 'h1, h3';
+  const bodySelector = modern
+    ? '[slot="text-body"], [data-post-click-location="text-body"], [id$="-post-rtjson-content"]'
+    : classic ? '.expando .usertext-body .md' : '[data-testid="post-content"], [data-click-id="text"]';
+  const titleNode = [...post.querySelectorAll(titleSelector)].find(node => ownedPostSection(node, post));
+  const title = modern && post.hasAttribute('post-title') ? post.getAttribute('post-title') : titleNode ? redditSectionText(titleNode, post) : '';
+  const sections = [...post.querySelectorAll(bodySelector)].filter(node => ownedPostSection(node, post));
+  const bodies = sections.filter(node => !sections.some(parent => parent !== node && parent.contains(node)));
+  return [title, ...bodies.map(node => redditSectionText(node, post))].filter(Boolean).join('\n');
+}
+function readPost(el) {
+  if (!isReddit) {
+    const a = el.querySelector('a[href*="/status/"] time')?.closest('a');
+    return {id: a?.getAttribute('href').match(/\/status\/(\d+)/)?.[1], text: el.querySelector('[data-testid="tweetText"]')?.textContent || ''};
+  }
+  // Older containers can wrap a modern post. Never classify/count both.
+  if (el.tagName !== 'SHREDDIT-POST' && el.querySelector('shreddit-post')) return {};
+  const fullname = el.getAttribute('id') || '';
+  const raw = el.getAttribute('data-fullname') || (fullname.startsWith('t3_') ? fullname : '');
+  const permalink = el.getAttribute('permalink') || el.getAttribute('content-href') || el.getAttribute('data-permalink') || el.querySelector('a[href*="/comments/"]')?.getAttribute('href') || '';
+  const postId = raw.match(/^t3_([a-z0-9]+)$/i)?.[1] || permalink.match(/\/comments\/([a-z0-9]+)(?:\/|$|[?#])/i)?.[1];
+  return {id: postId ? `reddit:t3_${postId.toLowerCase()}` : null, text: redditPostText(el)};
+}
+
+function controlsRoot(el) { return el.shadowRoot || el; }
+const observedRoots = new WeakSet();
+function prepareControls(el) {
+  const root = controlsRoot(el);
+  // Reddit renders cards using web components. Keep controls inside their open
+  // shadow root so unslotted light-DOM children cannot disappear.
+  if (root !== el && !root.querySelector('style[data-dl-style]')) {
+    const style = document.createElement('style');
+    style.dataset.dlStyle = '1';
+    style.textContent = `
+      .dl-dot{position:absolute;top:8px;right:8px;width:14px;height:14px;padding:0;border-radius:50%;z-index:10;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #555}
+      .dl-green{background:#22c55e}.dl-red{background:#ef4444}.dl-gray{background:#9ca3af}
+      .dl-veil{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px;font:14px system-ui,sans-serif;color:#111;background:#f5f7f6;overflow:auto}
+      .dl-veil button{cursor:pointer;border:1px solid currentColor;border-radius:999px;padding:6px 16px;background:transparent;color:inherit;font:inherit}
+      @media(prefers-color-scheme:dark){.dl-veil{color:#eee;background:#17201d}}
+    `;
+    root.appendChild(style);
+  }
+  if (root !== el && !observedRoots.has(root)) {
+    observedRoots.add(root);
+    new MutationObserver(records => {
+      if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node =>
+        node.nodeType === Node.ELEMENT_NODE && !node.matches('.dl-dot, .dl-veil, style[data-dl-style]')))) enqueue(el);
+    }).observe(root, {childList:true});
+  }
+  return root;
 }
 
 const shouldBlur = state => cfg.blurMode === "nongreen" ? state !== "green" : cfg.blurMode === "red" ? state === "red" : false;
@@ -89,7 +161,8 @@ function reasonFor(state, r) {
 }
 
 function applyVeil(el, id, state, r) {
-  el.querySelector(".dl-veil")?.remove();
+  const root = controlsRoot(el);
+  root.querySelector(".dl-veil")?.remove();
   if (!shouldBlur(state) || revealed.has(id)) return;
   const veil = document.createElement("div");
   veil.className = "dl-veil";
@@ -98,24 +171,36 @@ function applyVeil(el, id, state, r) {
   const stop = e => { e.stopPropagation(); e.preventDefault(); };
   veil.addEventListener("click", stop);
   veil.querySelector("button").addEventListener("click", e => { stop(e); revealed.add(id); veil.remove(); report(el, true); });
-  el.appendChild(veil);
+  root.appendChild(veil);
 }
 
 function process(el, force = false) {
   if (!el.isConnected) return;
-  const id = tweetId(el), textEl = el.querySelector('[data-testid="tweetText"]');
-  if (!id) return;
-  const text = textEl ? textEl.textContent : "";
+  const {id, text} = readPost(el);
   const previous = tracked.get(el);
-  if (!force && previous?.id === id && previous.text === text) return;
-  if (previous) { visibility.unobserve(el); el.querySelector('.dl-dot')?.remove(); el.querySelector('.dl-veil')?.remove(); }
+  if (!id) {
+    if (previous) {
+      visibility.unobserve(el);
+      previous.root.querySelector('.dl-dot')?.remove();
+      previous.root.querySelector('.dl-veil')?.remove();
+      tracked.delete(el);
+      delete el.dataset.dl;
+    }
+    return;
+  }
+  const root = controlsRoot(el);
+  if (!force && previous?.id === id && previous.text === text && previous.root === root && root.querySelector('.dl-dot')) return;
+  if (previous) { visibility.unobserve(el); previous.root.querySelector('.dl-dot')?.remove(); previous.root.querySelector('.dl-veil')?.remove(); }
   el.dataset.dl = "1";
+  prepareControls(el);
   let r = classify(text), state = r.state;
-  tracked.set(el, {id, text, state, result: r, visible: false});
-  const dot = document.createElement("div");
+  tracked.set(el, {id, text, state, result: r, visible: false, root});
+  const dot = document.createElement("button");
+  dot.type = 'button';
   dot.className = `dl-dot dl-${state}`;
   dot.title = "Click to correct: green / red / gray";
-  el.appendChild(dot);
+  dot.setAttribute('aria-label', `Post classified ${state}. Click to correct.`);
+  root.appendChild(dot);
   applyVeil(el, id, state, r);
   visibility.observe(el);
   dot.addEventListener("click", e => {
@@ -130,12 +215,12 @@ function process(el, force = false) {
     tracked.get(el).state = state;
     tracked.get(el).result = {pos: [], neg: []};
     dot.className = `dl-dot dl-${state}`;
+    dot.setAttribute('aria-label', `Post classified ${state}. Click to correct.`);
     applyVeil(el, id, state, { pos: [], neg: [] });
     report(el);
   });
 }
 
-const postSelector = 'article[data-testid="tweet"]';
 const candidates = new Map();
 let workScheduled = false;
 function enqueue(el, force = false) {
@@ -178,12 +263,22 @@ function drainMutations() {
 }
 new MutationObserver(records => {
   for (const record of records) {
-    for (const node of record.addedNodes) {
-      if (node.nodeType === Node.ELEMENT_NODE) pendingNodes.add(node);
+    const target = record.target.nodeType === Node.ELEMENT_NODE ? record.target : record.target.parentElement;
+    if (!target || target.closest('.dl-dot, .dl-veil, style[data-dl-style]')) continue;
+    if (record.type === 'childList') {
+      for (const node of record.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE && !node.matches('.dl-dot, .dl-veil, style[data-dl-style]')) pendingNodes.add(node);
+      }
+    }
+    // Character edits, removed body text and reused cards must reclassify too.
+    if (record.type !== 'childList' || [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === Node.TEXT_NODE || (node.nodeType === Node.ELEMENT_NODE && !node.matches('.dl-dot, .dl-veil, style[data-dl-style]')))) {
+      const post = target.closest(postSelector);
+      if (post) pendingNodes.add(post);
     }
   }
   if (pendingNodes.size && !mutationRaf) mutationRaf = requestAnimationFrame(drainMutations);
-}).observe(document.body, {childList: true, subtree: true});
+}).observe(document.body, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'id', 'data-fullname', 'data-permalink', 'permalink', 'content-href', 'post-title']});
+if (isReddit && window.customElements) customElements.whenDefined('shreddit-post').then(() => requestAnimationFrame(() => scan(true)));
 
 async function load(force = true) {
   const s = await chrome.storage.sync.get(["goals", "avoid", "blurMode"]);

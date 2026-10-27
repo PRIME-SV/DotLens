@@ -1,7 +1,8 @@
 // Serialized in the service worker so multiple tabs cannot overwrite one another.
 const localDay = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 function recordEvent(analytics, event, now = new Date()) {
-  if (!event || !/^\d+$/.test(event.id) || !['green', 'red', 'gray'].includes(event.state)) return analytics;
+  // Keep existing numeric X keys; namespace Reddit IDs to avoid collisions.
+  if (!event || typeof event.id !== 'string' || !/^(?:\d+|reddit:t3_[a-z0-9]+)$/.test(event.id) || !['green', 'red', 'gray'].includes(event.state)) return analytics;
   const day = localDay(now);
   analytics.version = 1;
   analytics.started ||= day;

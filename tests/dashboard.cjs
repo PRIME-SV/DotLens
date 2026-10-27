@@ -1,0 +1,61 @@
+const {chromium} = require('C:/Users/Admin/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const path = require('node:path');
+const extensionRoot = path.resolve(__dirname,'..');
+const {pathToFileURL} = require('node:url');
+const assert = require('node:assert/strict');
+(async () => {
+ const browser = await chromium.launch({channel: 'msedge', headless: true});
+ const page = await browser.newPage({viewport: {width: 1440, height: 1100}});
+ const errors = []; page.on('pageerror', error => errors.push(error.message));
+ await page.addInitScript(() => {
+   const today = new Date(); const key = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+   const posts = {};
+   for(let i=0;i<24;i++) posts[String(i)] = {state: i < 12 ? 'red' : 'green', hidden:i < 12, everHidden:i < 12, revealed:i===0, reasons: i % 2 ? ['celebrity gossip'] : ['rage bait']};
+   const store = {analytics:{started:key, days:{[key]:posts}}, secondsPerPost:15};
+   window.testStore = store;
+   const listeners=[];
+   window.chrome = {storage: {local: {async get(){return store}, async set(value){Object.assign(store,value)}}, sync: {async get(){return {goals:'system design, AI',avoid:'celebrity gossip, rage bait',blurMode:'red'}}, async set(value){window.savedSettings=value}}, onChanged:{addListener(fn){listeners.push(fn)}}},runtime:{openOptionsPage(){window.dashboardOpened=true}}};
+ });
+ await page.goto(pathToFileURL(path.join(extensionRoot, 'options.html')).href);
+ await page.waitForFunction(() => document.getElementById('hidden').textContent === '12');
+ assert.equal(await page.locator('#saved').textContent(), '2 min 45 sec');
+ assert.equal(await page.locator('#rate').textContent(), '50%');
+ assert.equal(await page.locator('#revealed').textContent(), '1');
+ assert.equal(await page.locator('.reason').count(), 2);
+ await page.screenshot({path:'tests/dashboard-desktop.png', fullPage:true});
+ await page.locator('#seconds').fill('30'); await page.locator('#save').click();
+ await page.waitForFunction(() => document.getElementById('saved').textContent === '5 min 30 sec');
+ assert.equal(await page.evaluate(() => window.savedSettings.goals), 'system design, AI');
+ await page.locator('#range').selectOption('30'); assert.equal(await page.locator('.chart-col').count(),30);
+ await page.setViewportSize({width:390,height:844});
+ assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
+ await page.screenshot({path:'tests/dashboard-mobile.png',fullPage:true});
+ await page.goto(pathToFileURL(path.join(extensionRoot, 'popup.html')).href);
+ await page.waitForFunction(() => document.getElementById('hidden').textContent === '12');
+ await page.locator('#opt').click(); assert.equal(await page.evaluate(() => window.dashboardOpened),true);
+ await page.screenshot({path:'tests/popup.png',fullPage:true});
+ await page.goto(pathToFileURL(path.join(extensionRoot, 'options.html')).href);
+ await page.evaluate(() => { window.testStore.analytics.days = {}; });
+ await page.locator('#range').selectOption('1');
+ assert.equal(await page.locator('#hidden').textContent(),'0');
+ assert.equal(await page.locator('#empty').isVisible(),true);
+ assert.deepEqual(errors,[]);
+ await page.route('https://x.com/**', route => route.fulfill({contentType:'text/html',body:'<!doctype html><body><article data-testid="tweet" style="height:250px"><a href="/author/status/987"><time>Today</time></a><div data-testid="tweetText">Latest celebrity gossip</div></article><article data-testid="tweet" style="height:250px"><a href="/author/status/988"><time>Today</time></a><div data-testid="tweetText">A system design guide</div></article></body>'}));
+ await page.setViewportSize({width:1000,height:900});
+ await page.goto('https://x.com/home');
+ await page.evaluate(() => {window.reports=[];window.chrome.runtime.sendMessage=async message => {window.reports.push(...(message.events || [message.event]).map(event => ({event})));return {ok:true}};});
+ await page.addScriptTag({path:path.join(extensionRoot, 'content.js')});
+ await page.waitForFunction(() => window.reports.length >= 2);
+ assert.equal(await page.locator('.dl-veil').count(),1);
+ assert.equal(await page.evaluate(() => window.reports.find(x => x.event.id==='987').event.reasons[0]),'celebrity gossip');
+ await page.locator('.dl-veil button').click();
+ await page.waitForFunction(() => window.reports.some(x => x.event.id==='987' && x.event.reveal && !x.event.hidden));
+ await page.locator('article').first().evaluate(el => {el.querySelector('a').href='/author/status/989';el.querySelector('[data-testid="tweetText"]').textContent='More celebrity gossip';});
+ await page.waitForFunction(() => window.reports.some(x => x.event.id==='989' && x.event.hidden));
+ assert.equal(await page.locator('article').first().locator('.dl-dot').count(),1);
+ assert.deepEqual(errors,[]);
+ await browser.close(); console.log('Dashboard browser checks passed: metrics, reasons, settings save, 30-day range, responsive layout, popup navigation, and empty state.');
+})().catch(error => {console.error(error);process.exit(1);});
+
+
+

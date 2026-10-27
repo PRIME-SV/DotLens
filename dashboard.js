@@ -48,7 +48,7 @@ $('save').addEventListener('click', async () => {
     const nextSeconds = validSeconds($('seconds').value);
     await chrome.storage.sync.set({goals: $('goals').value, avoid: $('avoid').value, blurMode: $('blurMode').value});
     await chrome.storage.local.set({secondsPerPost: nextSeconds});
-    secondsPerPost = nextSeconds; render(); $('msg').textContent = 'Saved. Refresh X to apply your filter.';
+    secondsPerPost = nextSeconds; render(); $('msg').textContent = 'Saved. Refresh X or Reddit to apply your filter.';
   } catch { $('msg').textContent = 'Could not save. Please try again.'; }
   finally { button.disabled = false; }
 });

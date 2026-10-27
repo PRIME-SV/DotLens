@@ -1,10 +1,11 @@
 .dl-dot{position:absolute;top:8px;right:8px;width:14px;height:14px;border-radius:50%;
- z-index:10;cursor:pointer;border:2px solid rgba(255,255,255,.7);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+ padding:0;z-index:10;cursor:pointer;border:2px solid rgba(255,255,255,.7);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 .dl-green{background:#22c55e}.dl-red{background:#ef4444}.dl-gray{background:#9ca3af}
-article[data-testid="tweet"][data-dl="1"]{position:relative}
+[data-dl="1"]{position:relative}
+shreddit-post[data-dl="1"]{display:block}
 .dl-veil{position:absolute;inset:0;z-index:9;display:flex;flex-direction:column;align-items:center;
  justify-content:center;gap:10px;text-align:center;padding:16px;font:14px system-ui,sans-serif;
- color:#111;background:#f5f7f6}
+ color:#111;background:#f5f7f6;overflow:auto}
 @media (prefers-color-scheme:dark){.dl-veil{color:#eee;background:#17201d}}
 .dl-veil b{font-size:15px}
 .dl-veil button{cursor:pointer;border:1px solid currentColor;background:transparent;color:inherit;

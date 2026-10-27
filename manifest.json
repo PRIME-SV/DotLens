@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "DotLens: Social Feed Filter",
-  "version": "0.2.5",
-  "description": "Green, red or gray dot on every post based on your own goals.",
+  "version": "0.3.2",
+  "description": "Filter X and Reddit posts by keywords and phrases. Hide distractions and track filtering with local analytics.",
   "permissions": [
     "storage"
   ],
@@ -13,7 +13,11 @@
     {
       "matches": [
         "https://x.com/*",
-        "https://twitter.com/*"
+        "https://twitter.com/*",
+        "https://reddit.com/*",
+        "https://www.reddit.com/*",
+        "https://old.reddit.com/*",
+        "https://new.reddit.com/*"
       ],
       "js": [
         "content.js"

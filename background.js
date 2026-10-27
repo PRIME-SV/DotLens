@@ -14,7 +14,7 @@ function flush() {
 }
 chrome.runtime.onMessage.addListener((message, sender, reply) => {
   if (!['post-observed', 'posts-observed'].includes(message?.type)) return;
-  if (!sender.tab || !/^https:\/\/(?:x|twitter)\.com\//.test(sender.url || '')) return;
+  if (!sender.tab || !/^https:\/\/(?:(?:x|twitter)\.com|(?:(?:www|old|new)\.)?reddit\.com)\//.test(sender.url || '')) return;
   const events = message.type === 'posts-observed' ? message.events : [message.event];
   if (!Array.isArray(events) || events.length > 2000) { reply({ok:false}); return; }
   pending.push({events, reply});
