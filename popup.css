@@ -4,7 +4,7 @@
 .popup .brand{font-size:20px;white-space:nowrap}
 .popup .enable-control{margin:0;gap:8px;font-size:12px;white-space:nowrap}
 .popup .popup-controls{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;margin-top:14px;padding:0;border:0;border-radius:0;background:transparent}
-.popup-controls select{margin:0;padding:8px 10px;min-width:0}
+.popup-controls select{margin:0;padding:8px 10px;min-width:0;font-size:13px;font-weight:600;line-height:1.4}
 .popup h1{display:flex;align-items:center;justify-content:space-between;font-size:13px;letter-spacing:0;margin:16px 0 8px;font-weight:600;color:#405a49}
 .popup .scope{font-size:11px;font-weight:500;background:#eaf1e7;padding:3px 7px;border-radius:12px;color:#405a49}
 .popup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 8px}
