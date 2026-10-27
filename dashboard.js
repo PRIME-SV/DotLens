@@ -65,3 +65,16 @@ chrome.storage.onChanged.addListener((changes, area) => {
     analytics = local.analytics || {}; secondsPerPost = validSeconds(local.secondsPerPost ?? 15); $('seconds').value = secondsPerPost; render();
   } catch { $('error').textContent = 'Could not load your dashboard. Reload the extension and try again.'; }
 })();
+
+// Keep the sidebar selection in sync with anchor navigation and browser history.
+function updateNavigation() {
+  const section = location.hash === '#preferences' ? '#preferences' : '#overview';
+  document.querySelectorAll('.nav').forEach(link => {
+    const active = link.getAttribute('href') === section;
+    link.classList.toggle('active', active);
+    if (active) link.setAttribute('aria-current', 'location');
+    else link.removeAttribute('aria-current');
+  });
+}
+window.addEventListener('hashchange', updateNavigation);
+updateNavigation();

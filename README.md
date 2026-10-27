@@ -26,3 +26,8 @@ Tests are in ../tests. Run analytics.cjs using Node for aggregation and concurre
 Only added or changed post candidates are processed, in short idle chunks. Text reads use textContent, matchers are compiled on settings load, and DotLens ignores its own control mutations. Analytics are deduplicated and batched over short intervals, with concurrent worker requests sharing storage writes. The previous live backdrop blur is replaced with an opaque cover to avoid expensive compositing while scrolling. Reveal controls and counts remain available. Preference changes now reprocess existing posts.
 
 A repeatable 60-post simulated-feed check (eight unrelated updates, then four down/up scroll cycles) reduced full-feed scans from 8 to 0, layout-dependent text reads from 480 to 0, and analytics messages during scrolling from 32 to 1. These are workload measurements, not an FPS guarantee for the live X site.
+
+
+## Privacy
+
+Read the [DotLens Privacy Policy](PRIVACY-POLICY.md) for details about local analytics, Chrome sync, retention, and user controls.
