@@ -1,7 +1,7 @@
 # Privacy Policy for DotLens: Social Feed Filter
 
 **Effective date: 26 October 2026**  
-**Last updated: 26 October 2026**
+**Last updated: 27 October 2026**
 
 DotLens: Social Feed Filter ("DotLens") is a Chrome extension maintained by [PRIME-SV](https://github.com/PRIME-SV) in the [DotLens repository](https://github.com/PRIME-SV/DotLens). This policy explains how the current extension processes and stores information when you use it on the X/Twitter website.
 
@@ -17,7 +17,7 @@ DotLens processes the text and identifiers of posts loaded on the X/Twitter webs
 
 ### Preferences you enter
 
-DotLens stores your goals, avoided keywords or phrases, and hiding mode. These preferences can reveal interests or other information you choose to enter.
+DotLens supports up to two profiles and stores each profile name, goals, avoided keywords or phrases, hiding mode, and the active profile selection. These preferences can reveal interests or other information you choose to enter.
 
 ### Local learning and analytics
 
@@ -29,15 +29,15 @@ DotLens stores:
 - Matching words or phrases and other filtering reasons.
 - Your configurable seconds-per-post assumption used to estimate time saved.
 
-Post IDs identify posts and can be associated with content on X. Analytics and learned words should therefore not be treated as anonymous data. Temporary page-session state, including reveal choices and deduplication records, is also held in memory.
+Post IDs identify posts and can be associated with content on X. Analytics and learned words should therefore not be treated as anonymous data. Temporary page-session state, including reveal choices and deduplication records, is also held in memory. Unsaved dashboard preferences use tab-session storage so drafts survive profile switches and reloads within that tab session. A local preference remembers when you dismiss the optional feedback panel.
 
 DotLens does not intentionally collect your X password, authentication cookies, payment information, or general browsing history across other websites. It does not provide direct-message analysis or image/video understanding.
 
 ## 3. Where information is stored
 
-**Local extension storage (`chrome.storage.local`):** Analytics, learned word weights, and the time-estimate setting are stored in the extension's local storage on your device. There is no DotLens developer backend receiving this information. Information stored on your device may be accessible to people or software with access to your device or browser profile.
+**Local extension storage (`chrome.storage.local`):** Analytics shared across both profiles, separate learned word weights for each profile, the on/off setting, and the time-estimate setting are stored in the extension's local storage on your device. There is no DotLens developer backend receiving this information. Information stored on your device may be accessible to people or software with access to your device or browser profile.
 
-**Chrome sync storage (`chrome.storage.sync`):** Goals, avoided terms, and hiding mode use Chrome sync storage. When Chrome syncing is enabled, Google may store and synchronize these settings across your signed-in browsers. When syncing is disabled, this storage behaves locally. Google's processing is governed by your Chrome settings and [Google's Privacy Policy](https://policies.google.com/privacy).
+**Chrome sync storage (`chrome.storage.sync`):** Both profile names, goals, avoided terms, hiding modes, and the active profile selection use Chrome sync storage. When Chrome syncing is enabled, Google may store and synchronize these settings across your signed-in browsers. When syncing is disabled, this storage behaves locally. Google's processing is governed by your Chrome settings and [Google's Privacy Policy](https://policies.google.com/privacy).
 
 DotLens uses extension storage rather than creating its own website tracking cookies.
 
@@ -74,7 +74,7 @@ Uninstalling the extension removes its local extension storage from that browser
 
 ## 7. Your choices
 
-You can edit goals and avoided terms, change the hiding mode, reveal hidden posts, and adjust the time-estimate assumption in DotLens. You can restrict site access, disable the extension, or uninstall it through Chrome's extension controls. Disabling the extension stops it from processing new activity but does not itself delete stored data.
+You can edit each profile’s name, goals and avoided terms, change its hiding mode, switch profiles, reveal hidden posts, and adjust the shared time-estimate assumption in DotLens. The toolbar popup has an on/off switch that removes DotLens dots and covers and pauses new observations while off. Turning it off does not delete stored data. You can restrict site access, disable the extension, or uninstall it through Chrome's extension controls. Disabling the extension stops it from processing new activity but does not itself delete stored data.
 
 The developer cannot access or erase your local analytics remotely. Contact the maintainer below if you need guidance about removing extension data. Do not include private post content, credentials, or other sensitive information in public feedback.
 

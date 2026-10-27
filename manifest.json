@@ -16,6 +16,7 @@
         "https://twitter.com/*"
       ],
       "js": [
+        "profiles.js",
         "content.js"
       ],
       "css": [

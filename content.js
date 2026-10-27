@@ -1,12 +1,13 @@
 const STOP = new Set("this that with have from they will your about what when there their been were just like more than into some very also only over them then here make".split(" "));
-let cfg = { goals: "", avoid: "", learned: {}, blurMode: "red" };
+let cfg = { goals: "", avoid: "", learned: {}, blurMode: "red", enabled: false, activeId: "1" };
+let configurationVersion = 0;
 const revealed = new Set();   // tweet ids the user chose to view
 const tracked = new WeakMap();
 const reported = new Map();
 let goalMatchers = [], avoidMatchers = [];
 function report(el, reveal = false) {
   const post = tracked.get(el);
-  if (!post?.visible) return;
+  if (!cfg.enabled || !post?.visible) return;
   const hidden = Boolean(el.querySelector('.dl-veil'));
   const reasons = post.state === 'red' ? post.result.neg : ['No goal match (strict mode)'];
   post.everHidden ||= hidden;
@@ -103,6 +104,12 @@ function applyVeil(el, id, state, r) {
 
 function process(el, force = false) {
   if (!el.isConnected) return;
+  if (!cfg.enabled) {
+    visibility.unobserve(el); tracked.delete(el);
+    el.querySelector('.dl-dot')?.remove(); el.querySelector('.dl-veil')?.remove();
+    delete el.dataset.dl;
+    return;
+  }
   const id = tweetId(el), textEl = el.querySelector('[data-testid="tweetText"]');
   if (!id) return;
   const text = textEl ? textEl.textContent : "";
@@ -111,7 +118,8 @@ function process(el, force = false) {
   if (previous) { visibility.unobserve(el); el.querySelector('.dl-dot')?.remove(); el.querySelector('.dl-veil')?.remove(); }
   el.dataset.dl = "1";
   let r = classify(text), state = r.state;
-  tracked.set(el, {id, text, state, result: r, visible: false});
+  const post = {id, text, state, result: r, visible: false, configurationVersion};
+  tracked.set(el, post);
   const dot = document.createElement("div");
   dot.className = `dl-dot dl-${state}`;
   dot.title = "Click to correct: green / red / gray";
@@ -120,11 +128,16 @@ function process(el, force = false) {
   visibility.observe(el);
   dot.addEventListener("click", e => {
     e.stopPropagation(); e.preventDefault();
+    // A profile/rule change may arrive before the scheduled dot refresh.
+    if (!cfg.enabled || post.configurationVersion !== configurationVersion || tracked.get(el) !== post) {
+      process(el, true);
+      return;
+    }
     const next = { green: "red", red: "gray", gray: "green" }[state];
     const learn = next === "green" ? 1 : next === "red" ? -1 : 0;
     if (learn) {
       for (const w of new Set(words(text))) cfg.learned[w] = Math.max(-3, Math.min(3, (cfg.learned[w] || 0) + learn));
-      chrome.storage.local.set({ learned: cfg.learned });
+      chrome.storage.local.set({ ['profileLearned' + cfg.activeId]: cfg.learned });
     }
     state = next;
     tracked.get(el).state = state;
@@ -185,16 +198,20 @@ new MutationObserver(records => {
   if (pendingNodes.size && !mutationRaf) mutationRaf = requestAnimationFrame(drainMutations);
 }).observe(document.body, {childList: true, subtree: true});
 
+let loadVersion = 0;
 async function load(force = true) {
-  const s = await chrome.storage.sync.get(["goals", "avoid", "blurMode"]);
-  const l = await chrome.storage.local.get("learned");
-  cfg = { goals: s.goals || "", avoid: s.avoid || "", learned: l.learned || {}, blurMode: s.blurMode || "red" };
+  const version = ++loadVersion;
+  const state = await DotLensSettings.load();
+  if (version !== loadVersion) return;
+  const switched = state.activeId !== cfg.activeId;
+  if (switched) revealed.clear();
+  if (force || switched) configurationVersion++;
+  cfg = {...state.profiles[state.activeId], learned: state.learned, enabled: state.enabled, activeId: state.activeId};
   goalMatchers = compileEntries(cfg.goals);
   avoidMatchers = compileEntries(cfg.avoid);
-  scan(force);
+  scan(force || switched);
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'sync' && ['goals', 'avoid', 'blurMode'].some(key => key in changes)) load(true);
-  else if (area === 'local' && 'learned' in changes) load(false);
+  if (DotLensSettings.relevant(changes, area)) load(area === 'sync' || 'enabled' in changes).catch(console.error);
 });
-load();
+load().catch(console.error);

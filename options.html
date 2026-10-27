@@ -1,14 +1,63 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DotLens · Your focus dashboard</title><link rel="stylesheet" href="dashboard.css"></head>
-<body><div class="layout"><aside><a class="brand" href="options.html"><span class="logo">●</span> DotLens<span class="badge">FOR X</span></a><p class="side-label">YOUR SPACE</p><a class="nav active" href="#overview">◈ &nbsp; Overview</a><a class="nav" href="#preferences">☷ &nbsp; Focus preferences</a><div class="side-note"><span class="status-dot"></span> Analytics stay on this device<p>A little less noise.<br>A little more intention.</p></div></aside>
-<main><header><div><p class="eyebrow">MAKE ROOM FOR WHAT MATTERS</p><h1>Your focus, in perspective.</h1><p class="muted">See what DotLens filtered from your X feed.</p></div><label class="period">Time range<select id="range"><option value="1">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select></label></header>
-<section id="overview" class="metrics"><article class="card metric"><span class="metric-label">Posts hidden <span class="icon pink">◌</span></span><strong id="hidden">0</strong><p>Unique posts covered by your filter</p></article><article class="card metric"><span class="metric-label">Estimated time saved <span class="icon mint">◷</span></span><strong id="saved">0 sec</strong><p id="estimate-note">Based on 15 seconds per unrevealed post</p></article><article class="card metric"><span class="metric-label">Filter rate <span class="icon lilac">↗</span></span><strong id="rate">0%</strong><p><span id="seen">0</span> posts encountered</p></article><article class="card metric"><span class="metric-label">Posts revealed <span class="icon sand">◎</span></span><strong id="revealed">0</strong><p>You chose to take a closer look</p></article></section>
-<div id="empty" class="notice">Your focus story starts here. Browse X with DotLens enabled to see real activity. No demo data is shown.</div>
-<section class="panels"><article class="card"><div class="section-head"><div><p class="eyebrow">A LITTLE PROGRESS, EVERY DAY</p><h2>Hidden posts over time</h2></div><span class="legend"><i></i> Posts hidden</span></div><div id="chart" class="chart" role="img" aria-label="Hidden posts by day"></div><p class="footnote">A post is counted once per day when it enters your viewport. Repeat visits on another day count again.</p></article><article class="card"><div class="section-head"><div><p class="eyebrow">WHAT YOUR FILTER CAUGHT</p><h2>Words &amp; phrases</h2></div><span id="reason-total" class="pill">0 matches</span></div><div id="reasons" class="reasons"></div><p class="footnote">A hidden post can match multiple terms. Strict-mode and manual hides appear as separate reasons.</p></article></section>
-<section class="ai-interest" aria-labelledby="ai-interest-title">
-<div class="ai-interest-icon" aria-hidden="true">✦</div>
-<div class="ai-interest-content"><p class="eyebrow">HELP SHAPE WHAT COMES NEXT</p><h2 id="ai-interest-title">Would you pay for a smarter DotLens?</h2><p class="ai-interest-intro">I'm considering optional paid AI features and would love to hear whether you'd find them worth paying for.</p><div class="ai-interest-features"><p><strong>AI-powered analytics</strong><span>Deeper insights into the topics and patterns in your feed.</span></p><p><strong>Smarter post filtering</strong><span>Use AI to understand a post's meaning and context before deciding whether to hide it.</span></p></div><p class="ai-interest-invite"><strong>Interested? Please leave a comment on the DotLens Chrome Web Store listing.</strong> Tell me which feature you'd pay for and what price would feel reasonable.</p><p class="ai-interest-note">These features are being explored and are not available yet. Your feedback will help guide development.</p></div>
-</section>
-<section class="card settings" id="preferences"><div class="section-head"><div><p class="eyebrow">CURATE YOUR CORNER OF X</p><h2>Focus preferences</h2><p class="muted">One keyword, phrase, or sentence per line. Commas work too.</p></div><span class="pill">Your rules, your feed</span></div><div class="form-grid"><label>More of this<textarea id="goals" rows="4" placeholder="machine learning&#10;system design&#10;AI"></textarea><small>Matching topics get a green dot.</small></label><label>Less of this<textarea id="avoid" rows="4" placeholder="celebrity gossip&#10;rage bait"></textarea><small>Matching topics get a red dot.</small></label><label>What should be hidden?<select id="blurMode"><option value="red">Red posts · topics I avoid</option><option value="nongreen">Strict focus · everything except green</option><option value="off">Nothing · show dots only</option></select></label><label>Estimated seconds saved per post<input type="number" id="seconds" min="1" max="300" step="1" value="15"><small>An assumption, not measured reading time. Revealed and currently unhidden posts are excluded.</small></label></div><div class="actions"><button id="save" class="primary">Save preferences</button><span id="msg" role="status" aria-live="polite"></span></div><p class="footnote">Phrases match consecutive words, ignoring capitalization and extra whitespace. Separate old space-delimited keywords with commas. Refresh X after saving.</p></section>
-<footer>DotLens · A calmer feed, by you.<span>30-day local analytics · <span id="started">Tracking starts with this update</span></span></footer><p class="footnote">Goals and avoid lists use Chrome sync when enabled. Analytics store post IDs, labels, and matching terms locally; post text is not stored. Older counters cannot be converted into hidden-post analytics.</p><p id="error" role="alert"></p></main></div><script src="dashboard-model.js"></script><script src="dashboard.js"></script></body></html>
-
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DotLens · Overview</title><link rel="stylesheet" href="dashboard.css"></head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="layout">
+<aside>
+  <a class="brand" href="#overview"><span class="logo" aria-hidden="true">●</span> DotLens <span class="badge">FOR X</span></a>
+  <p class="side-label">YOUR SPACE</p>
+  <nav aria-label="Dashboard"><a class="nav" href="#overview">Overview</a><a class="nav" href="#preferences">Profile settings</a></nav>
+  <div class="side-note"><span class="status-dot" aria-hidden="true"></span> Analytics stay on this device<p>A little less noise.<br>A little more intention.</p></div>
+</aside>
+<main id="main" tabindex="-1">
+  <header class="page-header"><div><p class="eyebrow">YOUR FEED, WITH INTENTION</p><h1 id="page-title">Your focus, in perspective.</h1><p class="muted" id="page-description">See your filtering activity across both profiles.</p></div></header>
+  <nav class="mobile-nav" aria-label="Dashboard sections"><a class="nav" href="#overview">Overview</a><a class="nav" href="#preferences">Profile settings</a></nav>
+  <section class="control-bar" aria-label="Filtering controls">
+    <label class="active-profile" for="profile">Active profile<select id="profile" disabled><option value="1">Profile 1</option><option value="2">Profile 2</option></select></label>
+    <label class="enable-control"><span id="enabled-label">Loading status…</span><input id="enabled" type="checkbox" role="switch" aria-label="Enable DotLens" disabled></label>
+    <a class="text-link" href="#preferences" id="edit-profile">Edit profile →</a>
+  </section>
+  <p id="control-status" role="status" aria-live="polite"></p>
+  <div id="paused" class="notice paused" hidden><strong>Filtering paused.</strong> Turn DotLens on above to apply your saved rules. Your previous activity is still shown.</div>
+  <p id="error" role="alert"></p>
+  <section id="overview-view" aria-label="Overview">
+    <section id="onboarding" class="card onboarding" hidden aria-labelledby="setup-title">
+      <p class="eyebrow">A QUICK START</p><h2 id="setup-title">Make this feed yours.</h2><p class="muted">Set up your topics, then browse X to see your results here.</p>
+      <ol class="setup-steps"><li><strong>Name your profile</strong><span>Use names such as Work and Personal.</span></li><li><strong>Choose your topics</strong><span>Add topics to see or avoid, then choose what to hide.</span></li><li><strong>Save and browse X</strong><span>Turn filtering on. Your saved rules apply automatically.</span></li></ol>
+      <div class="actions"><a class="primary" href="#preferences" id="setup-link">Set up profile →</a><a class="secondary" href="https://x.com/home" target="_blank" rel="noopener noreferrer">Open X ↗</a></div>
+    </section>
+    <div class="section-head overview-heading" id="activity-heading"><div><h2>Your activity <span class="pill">All profiles</span></h2><p class="muted">Combined activity from both profiles.</p></div><label class="period" for="range">Time range<select id="range"><option value="1">Today</option><option value="7" selected>Last 7 days</option><option value="30">Last 30 days</option></select></label></div>
+    <section id="overview" class="metrics" aria-label="Filtering totals">
+      <article class="card metric"><span class="metric-label">Posts hidden</span><strong id="hidden">0</strong><p>Counted once per post, per day</p></article>
+      <article class="card metric"><span class="metric-label">Time saved · estimated</span><strong id="saved">0s</strong><p id="estimate-note">15 sec per unrevealed hidden post</p></article>
+      <article class="card metric"><span class="metric-label">Filter rate</span><strong id="rate">0%</strong><p><span id="seen">0</span> posts encountered</p></article>
+      <article class="card metric"><span class="metric-label">Posts revealed</span><strong id="revealed">0</strong><p>You chose to take a closer look</p></article>
+    </section>
+    <div id="empty" class="notice" hidden>No activity in this time range. Choose another range or browse X with filtering on.</div>
+    <section class="panels" id="activity-panels">
+      <article class="card"><div class="section-head"><h2>Hidden posts over time</h2><span class="legend"><i aria-hidden="true"></i> Posts hidden</span></div><div id="chart" class="chart" role="img" aria-label="Hidden posts by day"></div><p class="footnote">A post counts once per day when it enters your viewport. Seeing it on another day counts again.</p></article>
+      <article class="card"><div class="section-head"><h2>Why posts were hidden</h2><span id="reason-total" class="pill">0 matches</span></div><div id="reasons" class="reasons"></div><p class="footnote">One post can match multiple terms. Strict focus and manual corrections can also hide posts.</p></article>
+    </section>
+  </section>
+  <section id="preferences-view" aria-label="Profile settings" hidden>
+    <section class="card settings" id="preferences" aria-labelledby="settings-title">
+      <div class="section-head"><div><h2 id="settings-title">Edit your profile</h2><p class="muted">Saved rules apply to all open X tabs.</p></div><span class="pill draft-badge" id="draft-badge" role="status">Saved</span></div>
+      <p class="form-help">Up to two profiles, each with its own topics, hiding mode, and learned corrections. Switching keeps unsaved edits in this tab. Select <strong>Save preferences</strong> to apply them.</p>
+      <fieldset id="profile-fields" disabled><legend class="sr-only">Profile preferences</legend>
+        <div class="form-grid"><label>Profile name<input id="profile-name" maxlength="40" placeholder="For example, Work or Personal" autocomplete="off"></label><label>What should be hidden?<select id="blurMode"><option value="red">Topics I avoid · red posts</option><option value="nongreen">Strict focus · all except green</option><option value="off">Nothing · show dots only</option></select></label>
+        <label>Topics I want to see<textarea id="goals" rows="5" placeholder="machine learning&#10;system design&#10;AI" aria-describedby="goals-help"></textarea><small id="goals-help">Helps identify relevant posts. One topic per line, or separate topics with commas.</small></label>
+        <label>Topics I want to avoid<textarea id="avoid" rows="5" placeholder="celebrity gossip&#10;rage bait" aria-describedby="avoid-help"></textarea><small id="avoid-help">Helps identify posts to hide. Keywords and complete phrases both work.</small></label></div>
+      </fieldset>
+      <div class="dot-guide" aria-label="Classification guide"><span><i class="dot green" aria-hidden="true"></i>Green · relevant</span><span><i class="dot red" aria-hidden="true"></i>Red · avoid</span><span><i class="dot gray" aria-hidden="true"></i>Gray · no clear match</span></div>
+      <p class="form-help">DotLens marks or hides posts. It does not reorder your X feed. Topic matches and your learned corrections determine the final color.</p>
+      <details class="estimate-settings"><summary>Time estimate · shared by both profiles</summary><label for="seconds">Estimated seconds saved per post<input type="number" id="seconds" min="1" max="300" step="1" value="15" aria-describedby="seconds-help"></label><small id="seconds-help">An assumption, not measured reading time. Changing it recalculates past estimates for both profiles. Revealed posts are excluded.</small></details>
+      <div class="actions save-actions"><button id="save" class="primary" disabled>Save preferences</button><button id="discard" class="secondary" disabled>Discard edits</button><span id="msg" role="status" aria-live="polite"></span></div>
+      <p class="footnote">Phrases match consecutive words, ignoring capitalization and extra whitespace.</p>
+    </section>
+  </section>
+  <section class="feedback" id="feedback" hidden aria-label="Optional feedback"><details><summary>Help shape DotLens <span>Optional feedback</span></summary><p>Would you pay for AI-powered feed insights or smarter filtering? Leave a comment on the DotLens Chrome Web Store listing with the feature and price you would find useful. These features are being explored and are not available yet.</p></details><button id="dismiss-feedback" class="quiet" aria-label="Dismiss optional feedback">Dismiss</button></section>
+  <footer><span>DotLens · A calmer feed, by you.</span><span>30-day local analytics · <span id="started">No activity yet</span></span></footer>
+  <details class="privacy-details"><summary>Storage &amp; privacy</summary><p>Both saved profiles and the active selection use Chrome sync when enabled. The on/off setting, learned corrections, and analytics stay on this device. Unsaved edits stay in this dashboard tab for its session. Analytics combine both profiles and store post IDs and matching terms, never full post text.</p><a class="text-link" href="PRIVACY-POLICY.md" target="_blank" rel="noopener noreferrer">Read the privacy policy ↗</a></details>
+</main></div><script src="profiles.js"></script><script src="dashboard-model.js"></script><script src="dashboard.js"></script>
+</body></html>

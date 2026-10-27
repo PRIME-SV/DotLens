@@ -18,7 +18,7 @@ Separate literal keywords, phrases or sentences with commas or newlines. Phrases
 
 ## Verification
 
-Tests are in ../tests. Run analytics.cjs using Node for aggregation and concurrency checks. dashboard.cjs uses the bundled Playwright package and Edge in a temporary headless profile, with mocked Chrome storage and a simulated feed. These tests do not use a real X account or real browsing data. Screenshots in ../tests contain synthetic QA data, not user analytics. The current X interface has not been tested live.
+Run `node tests/profiles.cjs` from this repository for the profile and popup browser regression checks. The script uses the bundled Playwright package and Edge in a temporary headless browser with mocked Chrome storage and a simulated X feed. It checks legacy settings, profile isolation, saves and reloads, live switching, learned corrections, persistent on/off behavior, and responsive layout. Screenshots in tests contain synthetic QA data. The current X interface has not been tested live.
 
 
 ## 0.2.1 scrolling improvements
@@ -31,3 +31,15 @@ A repeatable 60-post simulated-feed check (eight unrelated updates, then four do
 ## Privacy
 
 Read the [DotLens Privacy Policy](PRIVACY-POLICY.md) for details about local analytics, Chrome sync, retention, and user controls.
+
+## Profiles and quick controls
+
+DotLens supports two named profiles. Open Profile settings to name each profile and set its own goals, avoid terms, and hiding mode. Switching profiles keeps unsaved edits in the current dashboard tab, including across reloads. Save preferences applies edits; Discard edits restores saved preferences. Existing rules and learned corrections become Profile 1; Profile 2 starts empty. Learned corrections stay separate on this device. Both saved profiles and the active selection use Chrome sync when enabled.
+
+The toolbar popup has an active-profile selector and a global on/off switch. Changes apply automatically to open X tabs. Turning DotLens off removes its dots and covers and pauses new observations; turning it on reapplies the current profile. The switch persists on this device. Analytics and the time-saving estimate remain shared across profiles.
+
+## Dashboard usability
+
+Overview and Profile settings are separate views, with navigation available at narrow widths. The active profile and filtering switch appear at the top of both views. Analytics are explicitly labeled All profiles. New users see setup guidance, and the optional feedback panel can be collapsed or dismissed. Time estimates use compact units, with full durations available to assistive technology.
+
+Run node tests/ux.cjs for draft preservation, save/discard and failure recovery, dashboard/popup state synchronization, responsive layouts, contrast, keyboard access, onboarding, and feedback dismissal checks.

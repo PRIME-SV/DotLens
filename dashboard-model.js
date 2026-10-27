@@ -24,3 +24,6 @@ function duration(seconds) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min${seconds % 60 ? ` ${seconds % 60} sec` : ''}`;
   return `${Math.floor(seconds / 3600)} hr ${Math.floor(seconds % 3600 / 60)} min`;
 }
+function compactDuration(seconds) {
+  return duration(seconds).replace(/ sec/g, 's').replace(/ min/g, 'm').replace(/ hr/g, 'h');
+}

@@ -1,0 +1,18 @@
+/* Toolbar controls and today's combined activity, sized for laptop screens. */
+.popup{width:360px;padding:16px}
+.popup-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.popup .brand{font-size:20px;white-space:nowrap}
+.popup .enable-control{margin:0;gap:8px;font-size:12px;white-space:nowrap}
+.popup .popup-controls{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:12px;margin-top:14px;padding:0;border:0;border-radius:0;background:transparent}
+.popup-controls select{margin:0;padding:8px 10px;min-width:0}
+.popup h1{display:flex;align-items:center;justify-content:space-between;font-size:13px;letter-spacing:0;margin:16px 0 8px;font-weight:600;color:#405a49}
+.popup .scope{font-size:11px;font-weight:500;background:#eaf1e7;padding:3px 7px;border-radius:12px;color:#405a49}
+.popup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 8px}
+.popup .metric{padding:12px;border-radius:10px;min-width:0}
+.popup .metric-label{font-size:12px;color:#53675c}
+.popup .metric strong{font-size:22px;letter-spacing:-.5px;margin:6px 0 0;white-space:nowrap}
+.popup #out{font-size:12px;line-height:1.5;color:#53675c}
+.popup .primary{width:100%;margin-top:12px;padding:10px 14px;font-size:12px}
+.popup .footnote{font-size:11.5px;line-height:1.5;margin-top:8px;color:#53675c}
+.popup #control-status{margin:8px 0 0;font-size:12px;line-height:1.4;color:#345d43}
+.popup #control-status:empty{display:none}
